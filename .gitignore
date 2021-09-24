@@ -1,0 +1,4 @@
+inst/temp
+src/*.o
+src/*.so
+*.swp

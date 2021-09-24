@@ -1,0 +1,18 @@
+Package: yaumap
+Version: 0.99.0
+Date: 2021-09-23
+Title: Yet Another UMAP Implementation
+Description: 
+    Provides a bare-bones implementation of the popular UMAP algorithm,
+    based on the umappp C++ library. Created primarily to test the C++
+    library itself, but feel free to use it for actual work. Just put 
+    in some data and get out some UMAP coordinates; nothing else to say.
+Authors@R: person("Aaron", "Lun", role=c("aut", "cre"), email="infinite.monkeys.with.keyboards@gmail.com")
+Imports:
+    Rcpp
+Suggests:
+    knitr
+LinkingTo: Rcpp
+SystemRequirements: C++17
+VignetteBuilder: knitr
+RoxygenNote: 7.1.2
