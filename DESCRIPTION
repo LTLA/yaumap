@@ -11,7 +11,9 @@ Authors@R: person("Aaron", "Lun", role=c("aut", "cre"), email="infinite.monkeys.
 Imports:
     Rcpp
 Suggests:
-    knitr
+    knitr,
+    rmarkdown,
+    gganimate
 LinkingTo: Rcpp
 SystemRequirements: C++17
 VignetteBuilder: knitr

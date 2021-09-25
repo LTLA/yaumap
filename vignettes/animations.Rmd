@@ -1,0 +1,55 @@
+---
+title: Creating UMAP animations
+author: 
+- name: Aaron Lun
+  email: infinite.monkeys.with.keyboards@gmail.com
+output:
+  html_document
+date: "Revised: September 25, 2020"
+package: yaumap
+vignette: >
+  %\VignetteIndexEntry{Animated UMAPs}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}  
+---
+
+# Animate your UMAPs
+
+We set the `tick` argument to obtain the state of the embedding every 10 epochs.
+
+```{r}
+library(yaumap)
+y <- as.matrix(iris[,1:4])
+in_progress <- umap_from_matrix(y, tick=10)
+```
+
+We take the list of matrices and massage that into a juicy data frame.
+We add the epoch count manually, no big deal.
+
+```{r}
+combined <- do.call(rbind, in_progress)
+df <- data.frame(x=combined[,1], y=combined[,2], species=iris[,5])
+df$epoch <- rep(seq_along(in_progress) * 10, each=nrow(y))
+```
+
+And then we animate.
+
+```{r}
+library(gganimate)
+gg <- ggplot(df, aes(x=x, y=y, color=species)) + 
+    geom_point() + 
+    transition_time(epoch)
+```
+
+```{r, results=FALSE, echo=FALSE}
+anim_save("example.gif", gg)
+```
+
+![](example.gif)
+
+
+# Session info {-}
+
+```{r}
+sessionInfo()
+```

@@ -43,7 +43,7 @@ umap_from_matrix <- function(y, ..., method=c("Annoy", "VPTree"), ndim=2, tick=0
 
         while (!bail) {
             out <- run(ptr, init[[1]], previous, tick)
-            collected <- append(collected, t(out[[1]]))
+            collected <- c(collected, list(t(out[[1]])))
             previous <- out[[1]]
             bail <- out[[2]]
         }
