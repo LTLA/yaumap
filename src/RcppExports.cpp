@@ -43,16 +43,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // initialize_from_matrix
-Rcpp::List initialize_from_matrix(SEXP params, Rcpp::NumericMatrix data, int n_neighbors, std::string nn_method, int ndim);
-RcppExport SEXP _yaumap_initialize_from_matrix(SEXP paramsSEXP, SEXP dataSEXP, SEXP n_neighborsSEXP, SEXP nn_methodSEXP, SEXP ndimSEXP) {
+Rcpp::List initialize_from_matrix(SEXP params, Rcpp::NumericMatrix data, std::string nn_method, int ndim);
+RcppExport SEXP _yaumap_initialize_from_matrix(SEXP paramsSEXP, SEXP dataSEXP, SEXP nn_methodSEXP, SEXP ndimSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< SEXP >::type params(paramsSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type data(dataSEXP);
-    Rcpp::traits::input_parameter< int >::type n_neighbors(n_neighborsSEXP);
     Rcpp::traits::input_parameter< std::string >::type nn_method(nn_methodSEXP);
     Rcpp::traits::input_parameter< int >::type ndim(ndimSEXP);
-    rcpp_result_gen = Rcpp::wrap(initialize_from_matrix(params, data, n_neighbors, nn_method, ndim));
+    rcpp_result_gen = Rcpp::wrap(initialize_from_matrix(params, data, nn_method, ndim));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -70,16 +69,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // run
-Rcpp::NumericMatrix run(SEXP params, SEXP status, int ndim, Rcpp::NumericMatrix embedding, int tick);
-RcppExport SEXP _yaumap_run(SEXP paramsSEXP, SEXP statusSEXP, SEXP ndimSEXP, SEXP embeddingSEXP, SEXP tickSEXP) {
+Rcpp::List run(SEXP params, SEXP status, Rcpp::NumericMatrix embedding, int tick);
+RcppExport SEXP _yaumap_run(SEXP paramsSEXP, SEXP statusSEXP, SEXP embeddingSEXP, SEXP tickSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< SEXP >::type params(paramsSEXP);
     Rcpp::traits::input_parameter< SEXP >::type status(statusSEXP);
-    Rcpp::traits::input_parameter< int >::type ndim(ndimSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type embedding(embeddingSEXP);
     Rcpp::traits::input_parameter< int >::type tick(tickSEXP);
-    rcpp_result_gen = Rcpp::wrap(run(params, status, ndim, embedding, tick));
+    rcpp_result_gen = Rcpp::wrap(run(params, status, embedding, tick));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -87,9 +85,9 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_yaumap_define_defaults", (DL_FUNC) &_yaumap_define_defaults, 0},
     {"_yaumap_setup_parameters", (DL_FUNC) &_yaumap_setup_parameters, 14},
-    {"_yaumap_initialize_from_matrix", (DL_FUNC) &_yaumap_initialize_from_matrix, 5},
+    {"_yaumap_initialize_from_matrix", (DL_FUNC) &_yaumap_initialize_from_matrix, 4},
     {"_yaumap_initialize_from_neighbors", (DL_FUNC) &_yaumap_initialize_from_neighbors, 4},
-    {"_yaumap_run", (DL_FUNC) &_yaumap_run, 5},
+    {"_yaumap_run", (DL_FUNC) &_yaumap_run, 4},
     {NULL, NULL, 0}
 };
 

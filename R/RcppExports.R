@@ -9,15 +9,15 @@ setup_parameters <- function(local_connectivity, bandwidth, mix_ratio, spread, m
     .Call(`_yaumap_setup_parameters`, local_connectivity, bandwidth, mix_ratio, spread, min_dist, a, b, repulsion_strength, num_epochs, learning_rate, negative_sample_rate, num_neighbors, seed, batch)
 }
 
-initialize_from_matrix <- function(params, data, n_neighbors, nn_method, ndim) {
-    .Call(`_yaumap_initialize_from_matrix`, params, data, n_neighbors, nn_method, ndim)
+initialize_from_matrix <- function(params, data, nn_method, ndim) {
+    .Call(`_yaumap_initialize_from_matrix`, params, data, nn_method, ndim)
 }
 
 initialize_from_neighbors <- function(params, indices, distances, ndim) {
     .Call(`_yaumap_initialize_from_neighbors`, params, indices, distances, ndim)
 }
 
-run <- function(params, status, ndim, embedding, tick = 0L) {
-    .Call(`_yaumap_run`, params, status, ndim, embedding, tick)
+run <- function(params, status, embedding, tick = 0L) {
+    .Call(`_yaumap_run`, params, status, embedding, tick)
 }
 

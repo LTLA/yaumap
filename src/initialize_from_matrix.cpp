@@ -3,7 +3,7 @@
 #include "knncolle/knncolle.hpp"
 
 //[[Rcpp::export(rng=false)]]
-Rcpp::List initialize_from_matrix(SEXP params, Rcpp::NumericMatrix data, int n_neighbors, std::string nn_method, int ndim) {
+Rcpp::List initialize_from_matrix(SEXP params, Rcpp::NumericMatrix data, std::string nn_method, int ndim) {
     const double* y = static_cast<const double*>(data.begin());
     int nd = data.nrow();
     int nobs = data.ncol();
