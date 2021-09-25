@@ -2,7 +2,7 @@
 #include "umappp/Umap.hpp"
 
 //[[Rcpp::export(rng=false)]]
-Rcpp::List initialize_from_neighbors(Rcpp::IntegerMatrix indices, Rcpp::NumericMatrix distances, int ndim) {
+Rcpp::List initialize_from_neighbors(SEXP params, Rcpp::IntegerMatrix indices, Rcpp::NumericMatrix distances, int ndim) {
     int nr = indices.nrow(), nc = indices.ncol();
     umappp::NeighborList x(nc);
     for (int i = 0; i < nc; ++i) {
@@ -13,9 +13,9 @@ Rcpp::List initialize_from_neighbors(Rcpp::IntegerMatrix indices, Rcpp::NumericM
         }
     }
 
+    Rcpp::XPtr<umappp::Umap> uptr(params);
     Rcpp::NumericMatrix output(ndim, nc);
-    umappp::Umap runner;
-    auto status = runner.initialize(std::move(x), ndim, (double*)output.begin());
+    auto status = uptr->initialize(std::move(x), ndim, (double*)output.begin());
 
     typedef decltype(status) Status;
     auto sptr = new Status(std::move(status));

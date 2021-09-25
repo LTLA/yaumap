@@ -3,7 +3,7 @@
 #include "knncolle/knncolle.hpp"
 
 //[[Rcpp::export(rng=false)]]
-Rcpp::List initialize_from_matrix(Rcpp::NumericMatrix data, int n_neighbors, std::string nn_method, int ndim) {
+Rcpp::List initialize_from_matrix(SEXP params, Rcpp::NumericMatrix data, int n_neighbors, std::string nn_method, int ndim) {
     const double* y = static_cast<const double*>(data.begin());
     int nd = data.nrow();
     int nobs = data.ncol();
@@ -15,9 +15,9 @@ Rcpp::List initialize_from_matrix(Rcpp::NumericMatrix data, int n_neighbors, std
         ptr.reset(new knncolle::KmknnEuclidean<>(nd, nobs, y));
     }
 
+    Rcpp::XPtr<umappp::Umap> uptr(params);
     Rcpp::NumericMatrix output(ndim, nobs);
-    umappp::Umap runner;
-    auto status = runner.initialize(ptr.get(), ndim, (double*)output.begin());
+    auto status = uptr->initialize(ptr.get(), ndim, (double*)output.begin());
 
     typedef decltype(status) Status;
     auto sptr = new Status(std::move(status));
