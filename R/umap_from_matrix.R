@@ -7,6 +7,7 @@
 #' @param ... Further arguments to change the defaults, see \code{\link{umap_defaults}}.
 #' @param method String specifying the neighbor detection algorithm to use.
 #' @param ndim Integer scalar specifying the number of embedding dimensions to return.
+#' @param nthreads Integer scalar specifying the number of threads to use.
 #' @param tick Integer scalar specifying the epoch interval to return embeddings in progress.
 #'
 #' @return 
@@ -23,27 +24,29 @@
 #' plot(out[,1], out[,2], col=iris[,5])
 #' 
 #' @export
-umap_from_matrix <- function(y, ..., method=c("Annoy", "VPTree"), ndim=2, tick=0) {
+umap_from_matrix <- function(y, ..., method=c("Annoy", "VPTree"), ndim=2, nthreads=1, tick=0) {
     args <- umap_defaults()
     replace <- list(...)
     for (x in names(replace)) {
         args[[x]] <- replace[[x]]
     }
-
     ptr <- do.call(setup_parameters, args)
-    init <- initialize_from_matrix(ptr, t(y), match.arg(method), ndim)
+    init <- initialize_from_matrix(ptr, t(y), match.arg(method), ndim, nthreads)
+    .iterate(ptr, init, ndim, nthreads, tick)
+}
 
+.iterate <- function(ptr, init, ndim, nthreads, tick) {
     if (tick == 0) {
-        X <- run(ptr, init[[1]], init[[2]], 0)
-        t(X[[1]])
+        X <- run(ptr, init, ndim, nthreads, 0)
+        matrix(X[[1]], ncol=ndim, byrow=TRUE)
     } else {
         collected <- list()
         bail <- FALSE 
         previous <- init[[2]]
 
         while (!bail) {
-            out <- run(ptr, init[[1]], previous, tick)
-            collected <- c(collected, list(t(out[[1]])))
+            out <- run(ptr, init, ndim, nthreads, tick)
+            collected <- c(collected, list(matrix(out[[1]], ncol=ndim, byrow=TRUE)))
             previous <- out[[1]]
             bail <- out[[2]]
         }

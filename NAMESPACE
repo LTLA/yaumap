@@ -2,5 +2,6 @@
 
 export(umap_defaults)
 export(umap_from_matrix)
+export(umap_from_neighbors)
 importFrom(Rcpp,sourceCpp)
 useDynLib(yaumap, .registration=TRUE)

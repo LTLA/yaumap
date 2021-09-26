@@ -43,41 +43,44 @@ BEGIN_RCPP
 END_RCPP
 }
 // initialize_from_matrix
-Rcpp::List initialize_from_matrix(SEXP params, Rcpp::NumericMatrix data, std::string nn_method, int ndim);
-RcppExport SEXP _yaumap_initialize_from_matrix(SEXP paramsSEXP, SEXP dataSEXP, SEXP nn_methodSEXP, SEXP ndimSEXP) {
+SEXP initialize_from_matrix(SEXP params, Rcpp::NumericMatrix data, std::string nn_method, int ndim, int nthreads);
+RcppExport SEXP _yaumap_initialize_from_matrix(SEXP paramsSEXP, SEXP dataSEXP, SEXP nn_methodSEXP, SEXP ndimSEXP, SEXP nthreadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< SEXP >::type params(paramsSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type data(dataSEXP);
     Rcpp::traits::input_parameter< std::string >::type nn_method(nn_methodSEXP);
     Rcpp::traits::input_parameter< int >::type ndim(ndimSEXP);
-    rcpp_result_gen = Rcpp::wrap(initialize_from_matrix(params, data, nn_method, ndim));
+    Rcpp::traits::input_parameter< int >::type nthreads(nthreadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(initialize_from_matrix(params, data, nn_method, ndim, nthreads));
     return rcpp_result_gen;
 END_RCPP
 }
 // initialize_from_neighbors
-Rcpp::List initialize_from_neighbors(SEXP params, Rcpp::IntegerMatrix indices, Rcpp::NumericMatrix distances, int ndim);
-RcppExport SEXP _yaumap_initialize_from_neighbors(SEXP paramsSEXP, SEXP indicesSEXP, SEXP distancesSEXP, SEXP ndimSEXP) {
+SEXP initialize_from_neighbors(SEXP params, Rcpp::IntegerMatrix indices, Rcpp::NumericMatrix distances, int ndim, int nthreads);
+RcppExport SEXP _yaumap_initialize_from_neighbors(SEXP paramsSEXP, SEXP indicesSEXP, SEXP distancesSEXP, SEXP ndimSEXP, SEXP nthreadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< SEXP >::type params(paramsSEXP);
     Rcpp::traits::input_parameter< Rcpp::IntegerMatrix >::type indices(indicesSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type distances(distancesSEXP);
     Rcpp::traits::input_parameter< int >::type ndim(ndimSEXP);
-    rcpp_result_gen = Rcpp::wrap(initialize_from_neighbors(params, indices, distances, ndim));
+    Rcpp::traits::input_parameter< int >::type nthreads(nthreadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(initialize_from_neighbors(params, indices, distances, ndim, nthreads));
     return rcpp_result_gen;
 END_RCPP
 }
 // run
-Rcpp::List run(SEXP params, SEXP status, Rcpp::NumericMatrix embedding, int tick);
-RcppExport SEXP _yaumap_run(SEXP paramsSEXP, SEXP statusSEXP, SEXP embeddingSEXP, SEXP tickSEXP) {
+Rcpp::List run(SEXP params, SEXP status, int ndim, int nthreads, int tick);
+RcppExport SEXP _yaumap_run(SEXP paramsSEXP, SEXP statusSEXP, SEXP ndimSEXP, SEXP nthreadsSEXP, SEXP tickSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< SEXP >::type params(paramsSEXP);
     Rcpp::traits::input_parameter< SEXP >::type status(statusSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type embedding(embeddingSEXP);
+    Rcpp::traits::input_parameter< int >::type ndim(ndimSEXP);
+    Rcpp::traits::input_parameter< int >::type nthreads(nthreadsSEXP);
     Rcpp::traits::input_parameter< int >::type tick(tickSEXP);
-    rcpp_result_gen = Rcpp::wrap(run(params, status, embedding, tick));
+    rcpp_result_gen = Rcpp::wrap(run(params, status, ndim, nthreads, tick));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -85,9 +88,9 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_yaumap_define_defaults", (DL_FUNC) &_yaumap_define_defaults, 0},
     {"_yaumap_setup_parameters", (DL_FUNC) &_yaumap_setup_parameters, 14},
-    {"_yaumap_initialize_from_matrix", (DL_FUNC) &_yaumap_initialize_from_matrix, 4},
-    {"_yaumap_initialize_from_neighbors", (DL_FUNC) &_yaumap_initialize_from_neighbors, 4},
-    {"_yaumap_run", (DL_FUNC) &_yaumap_run, 4},
+    {"_yaumap_initialize_from_matrix", (DL_FUNC) &_yaumap_initialize_from_matrix, 5},
+    {"_yaumap_initialize_from_neighbors", (DL_FUNC) &_yaumap_initialize_from_neighbors, 5},
+    {"_yaumap_run", (DL_FUNC) &_yaumap_run, 5},
     {NULL, NULL, 0}
 };
 

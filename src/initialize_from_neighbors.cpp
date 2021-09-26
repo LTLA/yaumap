@@ -1,10 +1,15 @@
 #include "Rcpp.h"
 #include "umappp/Umap.hpp"
+#include "Status.h"
+
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 //[[Rcpp::export(rng=false)]]
-Rcpp::List initialize_from_neighbors(SEXP params, Rcpp::IntegerMatrix indices, Rcpp::NumericMatrix distances, int ndim) {
+SEXP initialize_from_neighbors(SEXP params, Rcpp::IntegerMatrix indices, Rcpp::NumericMatrix distances, int ndim, int nthreads) {
     int nr = indices.nrow(), nc = indices.ncol();
-    umappp::NeighborList x(nc);
+    umappp::NeighborList<Float> x(nc);
     for (int i = 0; i < nc; ++i) {
         auto curi = indices.column(i);
         auto curd = distances.column(i);
@@ -13,11 +18,13 @@ Rcpp::List initialize_from_neighbors(SEXP params, Rcpp::IntegerMatrix indices, R
         }
     }
 
-    Rcpp::XPtr<umappp::Umap> uptr(params);
-    Rcpp::NumericMatrix output(ndim, nc);
-    auto status = uptr->initialize(std::move(x), ndim, (double*)output.begin());
+#ifdef _OPENMP
+    omp_set_num_threads(nthreads);
+#endif
 
-    typedef decltype(status) Status;
-    auto sptr = new Status(std::move(status));
-    return Rcpp::List::create(Rcpp::XPtr<Status>(sptr, true), output);
+    Rcpp::XPtr<Umap> uptr(params);
+    std::vector<Float> embedding(ndim * nc);
+    auto status = uptr->initialize(std::move(x), ndim, embedding.data());
+
+    return Rcpp::XPtr<Status>(new Status(std::move(status), std::move(embedding)));
 }

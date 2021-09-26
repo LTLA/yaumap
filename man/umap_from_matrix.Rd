@@ -4,7 +4,14 @@
 \alias{umap_from_matrix}
 \title{UMAP from an input matrix}
 \usage{
-umap_from_matrix(y, ..., method = c("Annoy", "VPTree"), ndim = 2, tick = 0)
+umap_from_matrix(
+  y,
+  ...,
+  method = c("Annoy", "VPTree"),
+  ndim = 2,
+  nthreads = 1,
+  tick = 0
+)
 }
 \arguments{
 \item{y}{Numeric matrix of observations (rows) and variables (columns).}
@@ -14,6 +21,8 @@ umap_from_matrix(y, ..., method = c("Annoy", "VPTree"), ndim = 2, tick = 0)
 \item{method}{String specifying the neighbor detection algorithm to use.}
 
 \item{ndim}{Integer scalar specifying the number of embedding dimensions to return.}
+
+\item{nthreads}{Integer scalar specifying the number of threads to use.}
 
 \item{tick}{Integer scalar specifying the epoch interval to return embeddings in progress.}
 }
