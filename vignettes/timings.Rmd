@@ -1,0 +1,74 @@
+---
+title: Timings across different  
+author: 
+- name: Aaron Lun
+  email: infinite.monkeys.with.keyboards@gmail.com
+output:
+  html_document
+date: "Revised: September 25, 2020"
+package: yaumap
+vignette: >
+  %\VignetteIndexEntry{Animated UMAPs}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}  
+---
+
+# Timing UMAP runs
+
+## Loading the data
+
+Using the MNIST digits data:
+
+```{r}
+library(snedata)
+mnist <- download_mnist()
+y <- as.matrix(mnist[,-ncol(mnist)])
+storage.mode(y) <- "double"
+```
+
+## Single thread
+
+We run the standard UMAP algorithm with Annoy-based neighbor detection and using a single thread.
+
+```{r}
+library(yaumap)
+system.time(out <- umap_from_matrix(y))
+plot(out[,1], out[,2], col=mnist$Label)
+```
+
+For comparison, we use **uwot** with the same settings.
+
+```{r}
+library(uwot)
+system.time(ref <- umap(y, n_epochs=500, n_threads=1))
+plot(ref[,1], ref[,2], col=mnist$Label)
+```
+
+## Multiple threads
+
+Reference **uwot** implementation:
+
+```{r}
+system.time(ref <- umap(y, n_epochs=500, n_threads=6))
+plot(ref[,1], ref[,2], col=mnist$Label)
+```
+
+Only parallelizing various parts of the initialization.
+
+```{r}
+system.time(out <- umap_from_matrix(y, nthreads=6))
+plot(out[,1], out[,2], col=mnist$Label)
+```
+
+Parallelizing everything in batch mode.
+
+```{r}
+system.time(out <- umap_from_matrix(y, nthreads=6, batch=TRUE))
+plot(out[,1], out[,2], col=mnist$Label)
+```
+
+# Session info {-}
+
+```{r}
+sessionInfo()
+```
