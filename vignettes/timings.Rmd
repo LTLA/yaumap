@@ -17,11 +17,32 @@ vignette: >
 
 ## Loading the data
 
-Using the MNIST digits data:
+Using the MNIST data:
 
 ```{r}
 library(snedata)
-mnist <- download_mnist()
+
+if (file.exists("mnist_fashion.rds")) {
+    mnist <- readRDS("mnist_fashion.rds")
+} else {
+    mnist <- download_fashion_mnist()
+    saveRDS(mnist, file="mnist_fashion.rds")
+}
+
+y <- as.matrix(mnist[,-(ncol(mnist)- 0:1)])
+storage.mode(y) <- "double"
+```
+
+```{r, eval=FALSE}
+library(snedata)
+
+if (file.exists("mnist_digits.rds")) {
+    mnist <- readRDS("mnist_digits.rds")
+} else {
+    mnist <- download_mnist()
+    saveRDS(mnist, file="mnist_digits.rds")
+}
+
 y <- as.matrix(mnist[,-ncol(mnist)])
 storage.mode(y) <- "double"
 ```
