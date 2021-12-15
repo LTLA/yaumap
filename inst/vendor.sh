@@ -9,9 +9,13 @@ set -u
 if [ ! -e temp ]
 then
     git clone https://github.com/LTLA/umappp temp
+    cd temp 
+else
+    cd temp
+    git checkout master
+    git pull
 fi
-cd temp 
-git checkout 984aae0071d5652625f50105e171601cf4d5339c
+git checkout 46e169b8df80725abca76e8007840ec17c54c819
 cmake -S . -B build -DBUILD_TESTING=OFF
 
 # Cleaing out what was there before.
@@ -21,11 +25,10 @@ mkdir ../include
 # Copying over the headers.
 cp -r include/umappp ../include/umappp
 
-for x in aarand kmeans knncolle annoy
+for x in aarand kmeans knncolle annoy irlba
 do
     cp -r build/_deps/${x}-src/include/${x} ../include/${x}
 done
 
-cp -r build/_deps/spectra-src/include/Spectra ../include/Spectra
-cp -r build/_deps/eigen3-src/Eigen ../include/Eigen
+cp -r build/_deps/eigen-src/Eigen ../include/Eigen
 cp -r build/_deps/hnswlib-src/hnswlib/ ../include/hnswlib
