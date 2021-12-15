@@ -42,12 +42,10 @@ umap_from_matrix <- function(y, ..., method=c("Annoy", "VPTree"), ndim=2, nthrea
     } else {
         collected <- list()
         bail <- FALSE 
-        previous <- init[[2]]
 
         while (!bail) {
             out <- run(ptr, init, ndim, nthreads, tick)
             collected <- c(collected, list(matrix(out[[1]], ncol=ndim, byrow=TRUE)))
-            previous <- out[[1]]
             bail <- out[[2]]
         }
         collected
