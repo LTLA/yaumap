@@ -24,27 +24,27 @@
 #' plot(out[,1], out[,2], col=iris[,5])
 #' 
 #' @export
-umap_from_matrix <- function(y, ..., method=c("Annoy", "VPTree"), ndim=2, nthreads=1, tick=0) {
+umap_from_matrix <- function(y, ..., method=c("Annoy", "VPTree"), ndim=2, force.dynamic=FALSE, nthreads=1, tick=0) {
     args <- umap_defaults()
     replace <- list(...)
     for (x in names(replace)) {
         args[[x]] <- replace[[x]]
     }
     ptr <- do.call(setup_parameters, args)
-    init <- initialize_from_matrix(ptr, t(y), match.arg(method), ndim, nthreads)
-    .iterate(ptr, init, ndim, nthreads, tick)
+    init <- initialize_from_matrix(ptr, t(y), match.arg(method), ndim, force.dynamic, nthreads)
+    .iterate(init, ndim, force.dynamic, nthreads, tick)
 }
 
-.iterate <- function(ptr, init, ndim, nthreads, tick) {
+.iterate <- function(init, ndim, force.dynamic, nthreads, tick) {
     if (tick == 0) {
-        X <- run(ptr, init, ndim, nthreads, 0)
+        X <- run(init, ndim, force.dynamic, nthreads, 0)
         matrix(X[[1]], ncol=ndim, byrow=TRUE)
     } else {
         collected <- list()
         bail <- FALSE 
 
         while (!bail) {
-            out <- run(ptr, init, ndim, nthreads, tick)
+            out <- run(init, ndim, force.dynamic, nthreads, tick)
             collected <- c(collected, list(matrix(out[[1]], ncol=ndim, byrow=TRUE)))
             bail <- out[[2]]
         }

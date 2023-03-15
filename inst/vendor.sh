@@ -15,7 +15,7 @@ else
     git checkout master
     git pull
 fi
-git checkout 46e169b8df80725abca76e8007840ec17c54c819
+git checkout ec240cc63e13e6baffdbfce89ecf34036d3094d1
 cmake -S . -B build -DBUILD_TESTING=OFF
 
 # Cleaing out what was there before.

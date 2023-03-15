@@ -22,13 +22,13 @@
 #' plot(out[,1], out[,2], col=iris[,5])
 #' 
 #' @export
-umap_from_neighbors <- function(indices, distances, ..., ndim=2, nthreads=1, tick=0) {
+umap_from_neighbors <- function(indices, distances, ..., ndim=2, force.dynamic=FALSE, nthreads=1, tick=0) {
     args <- umap_defaults()
     replace <- list(...)
     for (x in names(replace)) {
         args[[x]] <- replace[[x]]
     }
     ptr <- do.call(setup_parameters, args)
-    init <- initialize_from_neighbors(ptr, t(indices), t(neighbors), ndim, nthreads)
-    .iterate(ptr, init, ndim, nthreads, tick)
+    init <- initialize_from_neighbors(ptr, t(indices), t(neighbors), ndim, force.dynamic, nthreads)
+    .iterate(init, ndim, force.dynamic, nthreads, tick)
 }
