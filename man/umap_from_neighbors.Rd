@@ -31,7 +31,10 @@ This involves a round of nearest neighbor detection before the UMAP iterations t
 }
 \examples{
 y <- as.matrix(iris[,1:4])
-out <- umap_from_matrix(y)
+
+library(FNN)
+nn <- get.knn(y, 15)
+out <- umap_from_neighbors(nn$nn.idx, nn$nn.dist)
 plot(out[,1], out[,2], col=iris[,5])
 
 }

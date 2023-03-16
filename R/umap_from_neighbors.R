@@ -18,7 +18,10 @@
 #'
 #' @examples
 #' y <- as.matrix(iris[,1:4])
-#' out <- umap_from_matrix(y)
+#'
+#' library(FNN)
+#' nn <- get.knn(y, 15)
+#' out <- umap_from_neighbors(nn$nn.idx, nn$nn.dist)
 #' plot(out[,1], out[,2], col=iris[,5])
 #' 
 #' @export
@@ -29,6 +32,6 @@ umap_from_neighbors <- function(indices, distances, ..., ndim=2, nthreads=1, tic
         args[[x]] <- replace[[x]]
     }
     ptr <- do.call(setup_parameters, args)
-    init <- initialize_from_neighbors(ptr, t(indices), t(neighbors), ndim, nthreads)
+    init <- initialize_from_neighbors(ptr, t(indices) - 1L, t(distances), ndim, nthreads)
     .iterate(ptr, init, ndim, nthreads, tick)
 }
