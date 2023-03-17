@@ -7,7 +7,7 @@
 #endif
 
 //[[Rcpp::export(rng=false)]]
-SEXP initialize_from_neighbors(SEXP params, Rcpp::IntegerMatrix indices, Rcpp::NumericMatrix distances, int ndim, int nthreads) {
+SEXP initialize_from_neighbors(SEXP params, Rcpp::IntegerMatrix indices, Rcpp::NumericMatrix distances, int ndim) {
     int nr = indices.nrow(), nc = indices.ncol();
     umappp::NeighborList<Float> x(nc);
     for (int i = 0; i < nc; ++i) {
@@ -17,10 +17,6 @@ SEXP initialize_from_neighbors(SEXP params, Rcpp::IntegerMatrix indices, Rcpp::N
             x[i].emplace_back(curi[j], curd[j]);
         }
     }
-
-#ifdef _OPENMP
-    omp_set_num_threads(nthreads);
-#endif
 
     Rcpp::XPtr<Umap> uptr(params);
     std::vector<Float> embedding(ndim * nc);

@@ -24,15 +24,15 @@
 #' plot(out[,1], out[,2], col=iris[,5])
 #' 
 #' @export
-umap_from_matrix <- function(y, ..., method=c("Annoy", "VPTree"), ndim=2, nthreads=1, tick=0) {
+umap_from_matrix <- function(y, ..., method=c("Annoy", "VPTree"), ndim=2, tick=0) {
     args <- umap_defaults()
     replace <- list(...)
     for (x in names(replace)) {
         args[[x]] <- replace[[x]]
     }
     ptr <- do.call(setup_parameters, args)
-    init <- initialize_from_matrix(ptr, t(y), match.arg(method), ndim, nthreads)
-    .iterate(init, ndim, nthreads, tick)
+    init <- initialize_from_matrix(ptr, t(y), match.arg(method), ndim)
+    .iterate(init, ndim, args$num_threads, tick)
 }
 
 .iterate <- function(init, ndim, nthreads, tick) {

@@ -5,16 +5,16 @@ define_defaults <- function() {
     .Call(`_yaumap_define_defaults`)
 }
 
-setup_parameters <- function(local_connectivity, bandwidth, mix_ratio, spread, min_dist, a, b, repulsion_strength, num_epochs, learning_rate, negative_sample_rate, num_neighbors, seed) {
-    .Call(`_yaumap_setup_parameters`, local_connectivity, bandwidth, mix_ratio, spread, min_dist, a, b, repulsion_strength, num_epochs, learning_rate, negative_sample_rate, num_neighbors, seed)
+setup_parameters <- function(local_connectivity, bandwidth, mix_ratio, spread, min_dist, a, b, repulsion_strength, num_epochs, learning_rate, negative_sample_rate, num_neighbors, seed, num_threads) {
+    .Call(`_yaumap_setup_parameters`, local_connectivity, bandwidth, mix_ratio, spread, min_dist, a, b, repulsion_strength, num_epochs, learning_rate, negative_sample_rate, num_neighbors, seed, num_threads)
 }
 
-initialize_from_matrix <- function(params, data, nn_method, ndim, nthreads) {
-    .Call(`_yaumap_initialize_from_matrix`, params, data, nn_method, ndim, nthreads)
+initialize_from_matrix <- function(params, data, nn_method, ndim) {
+    .Call(`_yaumap_initialize_from_matrix`, params, data, nn_method, ndim)
 }
 
-initialize_from_neighbors <- function(params, indices, distances, ndim, nthreads) {
-    .Call(`_yaumap_initialize_from_neighbors`, params, indices, distances, ndim, nthreads)
+initialize_from_neighbors <- function(params, indices, distances, ndim) {
+    .Call(`_yaumap_initialize_from_neighbors`, params, indices, distances, ndim)
 }
 
 run <- function(status, nthreads, tick = 0L) {

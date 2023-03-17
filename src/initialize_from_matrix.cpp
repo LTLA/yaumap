@@ -3,19 +3,11 @@
 #include "knncolle/knncolle.hpp"
 #include "Status.h"
 
-#ifdef _OPENMP
-#include <omp.h>
-#endif
-
 //[[Rcpp::export(rng=false)]]
-SEXP initialize_from_matrix(SEXP params, Rcpp::NumericMatrix data, std::string nn_method, int ndim, int nthreads) {
+SEXP initialize_from_matrix(SEXP params, Rcpp::NumericMatrix data, std::string nn_method, int ndim) {
     const double* y = static_cast<const double*>(data.begin());
     int nd = data.nrow();
     int nobs = data.ncol();
-
-#ifdef _OPENMP
-    omp_set_num_threads(nthreads);
-#endif
 
     std::unique_ptr<knncolle::Base<int, Float> > ptr;
     if (nn_method == "Annoy") {
