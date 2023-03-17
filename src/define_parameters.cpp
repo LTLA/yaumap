@@ -17,8 +17,7 @@ Rcpp::List define_defaults() {
         Rcpp::Named("learning_rate") = Rcpp::wrap(Umap::Defaults::learning_rate),
         Rcpp::Named("negative_sample_rate") = Rcpp::wrap(Umap::Defaults::negative_sample_rate),
         Rcpp::Named("num_neighbors") = Rcpp::wrap(Umap::Defaults::num_neighbors),
-        Rcpp::Named("seed") = Rcpp::wrap(Umap::Defaults::seed),
-        Rcpp::Named("batch") = Rcpp::wrap(Umap::Defaults::batch)
+        Rcpp::Named("seed") = Rcpp::wrap(Umap::Defaults::seed)
     );
 }
 
@@ -36,8 +35,7 @@ SEXP setup_parameters(
     double learning_rate,
     double negative_sample_rate,
     int num_neighbors,
-    int seed,
-    bool batch
+    int seed
 ) {
     auto ptr = new Umap;
     ptr->set_local_connectivity(local_connectivity);
@@ -56,7 +54,6 @@ SEXP setup_parameters(
 
     ptr->set_num_neighbors(num_neighbors);
     ptr->set_seed(seed);
-    ptr->set_batch(batch);
 
     return Rcpp::XPtr<Umap>(ptr, true);
 }

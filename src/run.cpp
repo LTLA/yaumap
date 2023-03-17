@@ -7,8 +7,7 @@
 #endif
 
 //[[Rcpp::export(rng=false)]]
-Rcpp::List run(SEXP params, SEXP status, int ndim, int nthreads, int tick = 0) {
-    Rcpp::XPtr<Umap> pptr(params);
+Rcpp::List run(SEXP status, int nthreads, int tick = 0) {
     Rcpp::XPtr<Status> sptr(status);
 
     int epoch_limit = 0;
@@ -16,11 +15,7 @@ Rcpp::List run(SEXP params, SEXP status, int ndim, int nthreads, int tick = 0) {
         epoch_limit = sptr->status.epoch() + tick;
     }
 
-#ifdef _OPENMP
-    omp_set_num_threads(nthreads);
-#endif
-
-    pptr->run(sptr->status, ndim, sptr->embedding.data(), epoch_limit);
+    sptr->status.run(epoch_limit);
 
     return Rcpp::List::create(
         Rcpp::NumericVector(sptr->embedding.begin(), sptr->embedding.end()), 
