@@ -32,19 +32,19 @@ umap_from_matrix <- function(y, ..., method=c("Annoy", "VPTree"), ndim=2, tick=0
     }
     ptr <- do.call(setup_parameters, args)
     init <- initialize_from_matrix(ptr, t(y), match.arg(method), ndim)
-    .iterate(init, ndim, args$num_threads, tick)
+    .iterate(init, ndim, tick)
 }
 
-.iterate <- function(init, ndim, nthreads, tick) {
+.iterate <- function(init, ndim, tick) {
     if (tick == 0) {
-        X <- run(init, nthreads, 0)
+        X <- run(init, 0)
         matrix(X[[1]], ncol=ndim, byrow=TRUE)
     } else {
         collected <- list()
         bail <- FALSE 
 
         while (!bail) {
-            out <- run(init, nthreads, tick)
+            out <- run(init, tick)
             collected <- c(collected, list(matrix(out[[1]], ncol=ndim, byrow=TRUE)))
             bail <- out[[2]]
         }

@@ -18,7 +18,8 @@ Rcpp::List define_defaults() {
         Rcpp::Named("negative_sample_rate") = Rcpp::wrap(Umap::Defaults::negative_sample_rate),
         Rcpp::Named("num_neighbors") = Rcpp::wrap(Umap::Defaults::num_neighbors),
         Rcpp::Named("seed") = Rcpp::wrap(Umap::Defaults::seed),
-        Rcpp::Named("num_threads") = Rcpp::wrap(Umap::Defaults::num_threads)
+        Rcpp::Named("num_threads") = Rcpp::wrap(Umap::Defaults::num_threads),
+        Rcpp::Named("parallel_optimization") = Rcpp::wrap(Umap::Defaults::parallel_optimization)
     );
 }
 
@@ -37,7 +38,8 @@ SEXP setup_parameters(
     double negative_sample_rate,
     int num_neighbors,
     int seed,
-    int num_threads
+    int num_threads,
+    bool parallel_optimization
 ) {
     auto ptr = new Umap;
     ptr->set_local_connectivity(local_connectivity);
@@ -57,6 +59,7 @@ SEXP setup_parameters(
     ptr->set_num_neighbors(num_neighbors);
     ptr->set_seed(seed);
     ptr->set_num_threads(num_threads);
+    ptr->set_parallel_optimization(parallel_optimization);
 
     return Rcpp::XPtr<Umap>(ptr, true);
 }

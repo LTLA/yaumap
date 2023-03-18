@@ -7,7 +7,7 @@
 #endif
 
 //[[Rcpp::export(rng=false)]]
-Rcpp::List run(SEXP status, int nthreads, int tick = 0) {
+Rcpp::List run(SEXP status, int tick = 0) {
     Rcpp::XPtr<Status> sptr(status);
 
     int epoch_limit = 0;

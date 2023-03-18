@@ -20,8 +20,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // setup_parameters
-SEXP setup_parameters(double local_connectivity, double bandwidth, double mix_ratio, double spread, double min_dist, double a, double b, double repulsion_strength, int num_epochs, double learning_rate, double negative_sample_rate, int num_neighbors, int seed, int num_threads);
-RcppExport SEXP _yaumap_setup_parameters(SEXP local_connectivitySEXP, SEXP bandwidthSEXP, SEXP mix_ratioSEXP, SEXP spreadSEXP, SEXP min_distSEXP, SEXP aSEXP, SEXP bSEXP, SEXP repulsion_strengthSEXP, SEXP num_epochsSEXP, SEXP learning_rateSEXP, SEXP negative_sample_rateSEXP, SEXP num_neighborsSEXP, SEXP seedSEXP, SEXP num_threadsSEXP) {
+SEXP setup_parameters(double local_connectivity, double bandwidth, double mix_ratio, double spread, double min_dist, double a, double b, double repulsion_strength, int num_epochs, double learning_rate, double negative_sample_rate, int num_neighbors, int seed, int num_threads, bool parallel_optimization);
+RcppExport SEXP _yaumap_setup_parameters(SEXP local_connectivitySEXP, SEXP bandwidthSEXP, SEXP mix_ratioSEXP, SEXP spreadSEXP, SEXP min_distSEXP, SEXP aSEXP, SEXP bSEXP, SEXP repulsion_strengthSEXP, SEXP num_epochsSEXP, SEXP learning_rateSEXP, SEXP negative_sample_rateSEXP, SEXP num_neighborsSEXP, SEXP seedSEXP, SEXP num_threadsSEXP, SEXP parallel_optimizationSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< double >::type local_connectivity(local_connectivitySEXP);
@@ -38,7 +38,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type num_neighbors(num_neighborsSEXP);
     Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
     Rcpp::traits::input_parameter< int >::type num_threads(num_threadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(setup_parameters(local_connectivity, bandwidth, mix_ratio, spread, min_dist, a, b, repulsion_strength, num_epochs, learning_rate, negative_sample_rate, num_neighbors, seed, num_threads));
+    Rcpp::traits::input_parameter< bool >::type parallel_optimization(parallel_optimizationSEXP);
+    rcpp_result_gen = Rcpp::wrap(setup_parameters(local_connectivity, bandwidth, mix_ratio, spread, min_dist, a, b, repulsion_strength, num_epochs, learning_rate, negative_sample_rate, num_neighbors, seed, num_threads, parallel_optimization));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -69,24 +70,23 @@ BEGIN_RCPP
 END_RCPP
 }
 // run
-Rcpp::List run(SEXP status, int nthreads, int tick);
-RcppExport SEXP _yaumap_run(SEXP statusSEXP, SEXP nthreadsSEXP, SEXP tickSEXP) {
+Rcpp::List run(SEXP status, int tick);
+RcppExport SEXP _yaumap_run(SEXP statusSEXP, SEXP tickSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< SEXP >::type status(statusSEXP);
-    Rcpp::traits::input_parameter< int >::type nthreads(nthreadsSEXP);
     Rcpp::traits::input_parameter< int >::type tick(tickSEXP);
-    rcpp_result_gen = Rcpp::wrap(run(status, nthreads, tick));
+    rcpp_result_gen = Rcpp::wrap(run(status, tick));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
     {"_yaumap_define_defaults", (DL_FUNC) &_yaumap_define_defaults, 0},
-    {"_yaumap_setup_parameters", (DL_FUNC) &_yaumap_setup_parameters, 14},
+    {"_yaumap_setup_parameters", (DL_FUNC) &_yaumap_setup_parameters, 15},
     {"_yaumap_initialize_from_matrix", (DL_FUNC) &_yaumap_initialize_from_matrix, 4},
     {"_yaumap_initialize_from_neighbors", (DL_FUNC) &_yaumap_initialize_from_neighbors, 4},
-    {"_yaumap_run", (DL_FUNC) &_yaumap_run, 3},
+    {"_yaumap_run", (DL_FUNC) &_yaumap_run, 2},
     {NULL, NULL, 0}
 };
 

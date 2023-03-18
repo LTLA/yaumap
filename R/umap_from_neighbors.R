@@ -33,5 +33,5 @@ umap_from_neighbors <- function(indices, distances, ..., ndim=2, tick=0) {
     }
     ptr <- do.call(setup_parameters, args)
     init <- initialize_from_neighbors(ptr, t(indices) - 1L, t(distances), ndim)
-    .iterate(init, ndim, args$num_threads, tick)
+    .iterate(init, ndim, tick)
 }
