@@ -36,6 +36,33 @@ namespace umappp {
 enum InitMethod { SPECTRAL, SPECTRAL_ONLY, RANDOM, NONE };
 
 /**
+ * @cond
+ */
+inline int choose_num_epochs(int num_epochs, size_t size) {
+    if (num_epochs < 0) {
+        // Choosing the number of epochs. We use a simple formula to decrease
+        // the number of epochs with increasing size, with the aim being that
+        // the 'extra work' beyond the minimal 200 epochs should be the same
+        // regardless of the numbe of observations. Given one calculation per
+        // observation per epoch, this amounts to 300 * 10000 calculations at
+        // the lower bound, so we simply choose a number of epochs that
+        // equalizes the number of calculations for any number of observations.
+        if (num_epochs < 0) {
+            constexpr int limit = 10000, minimal = 200, maximal = 300;
+            if (size <= limit) {
+                num_epochs = minimal + maximal;
+            } else {
+                num_epochs = minimal + static_cast<int>(std::ceil(maximal * limit / static_cast<double>(size)));
+            }
+        }
+    }
+    return num_epochs;
+}
+/**
+ * @endcond
+ */
+
+/**
  * @brief Wrapper class to run UMAP.
  *
  * The Uniform Manifold Approximation and Projection (UMAP) algorithm is an efficient dimensionality reduction method based on nearest neighbors.
@@ -107,7 +134,7 @@ public:
         /**
          * See `set_num_epochs()`.
          */
-        static constexpr int num_epochs = 500;
+        static constexpr int num_epochs = -1;
 
         /**
          * See `set_learning_rate()`.
@@ -130,43 +157,63 @@ public:
         static constexpr uint64_t seed = 1234567890;
 
         /**
-         * See `set_batch()`.
+         * See `set_num_threads()`.
          */
-        static constexpr bool batch = false;
+        static constexpr int num_threads = 1;
+
+        /**
+         * See `set_parallel_optimization()`.
+         */
+        static constexpr int parallel_optimization = false;
     };
 
 private:
-    Float local_connectivity = Defaults::local_connectivity;
-
-    Float bandwidth = Defaults::bandwidth;
-
-    Float mix_ratio = Defaults::mix_ratio;
-
-    Float spread = Defaults::spread;
-
-    Float min_dist = Defaults::min_dist;
-
-    Float a = Defaults::a;
-
-    Float b = Defaults::b;
-
-    Float repulsion_strength = Defaults::repulsion_strength;
-
     InitMethod init = Defaults::initialize;
-
-    int num_epochs = Defaults::num_epochs;
-
-    Float learning_rate = Defaults::learning_rate;
-
-    Float negative_sample_rate = Defaults::negative_sample_rate;
-
     int num_neighbors = Defaults::num_neighbors;
-
+    Float local_connectivity = Defaults::local_connectivity;
+    Float bandwidth = Defaults::bandwidth;
+    Float mix_ratio = Defaults::mix_ratio;
+    Float spread = Defaults::spread;
+    Float min_dist = Defaults::min_dist;
+    int num_epochs = Defaults::num_epochs;
+    Float negative_sample_rate = Defaults::negative_sample_rate;
     uint64_t seed = Defaults::seed;
 
-    bool batch = Defaults::batch;
+    struct RuntimeParameters {
+        Float a = Defaults::a;
+        Float b = Defaults::b;
+        Float repulsion_strength = Defaults::repulsion_strength;
+        Float learning_rate = Defaults::learning_rate;
+        int nthreads = Defaults::num_threads;
+        bool parallel_optimization = Defaults::parallel_optimization;
+    };
+
+    RuntimeParameters rparams;
 
 public:
+    /** 
+     * @param i How to initialize the embedding, see `InitMethod` for more details.
+     * Some choices may use the existing coordinates provided to `run()` via the `embedding` argument.
+     *
+     * @return A reference to this `Umap` object.
+     */
+    Umap& set_initialize(InitMethod i = Defaults::initialize) {
+        init = i;
+        return *this;
+    }
+
+    /**
+     * @param n Number of neighbors to use to define the fuzzy sets.
+     * Larger values improve connectivity and favor preservation of global structure, at the cost of increased computational work.
+     * This argument is only used in certain `run()` and `initialize()` methods that perform identification of the nearest neighbors. 
+     *
+     * @return A reference to this `Umap` object.
+     */
+    Umap& set_num_neighbors(Float n = Defaults::num_neighbors) {
+        num_neighbors = n;
+        return *this;
+    }
+
     /**
      * @param l The number of nearest neighbors that are assumed to be always connected, with maximum membership confidence.
      * Larger values increase the connectivity of the embedding and reduce the focus on local structure.
@@ -225,72 +272,20 @@ public:
     }
 
     /**
-     * @param a Positive value for the $a$ parameter for the fuzzy set membership strength calculations.
-     * Larger values yield a sharper decay in membership strength with increasing distance between observations.
+     * @param n Number of epochs for the gradient descent, i.e., optimization iterations. 
      *
-     * If this or `set_b()` is set to zero, a suitable value for this parameter is automatically determined from the values provided to `set_spread()` and `set_min_dist()`.
+     * Larger values improve accuracy at the cost of computational work.
+     * If the requested number of epochs is negative, a value is automatically chosen based on the size of the dataset:
      *
-     * @return A reference to this `Umap` object.
-     */
-    Umap& set_a(Float a = Defaults::a) {
-        this->a = a;
-        return *this;
-    }
-
-    /**
-     * @param b Value in $(0, 1)$ for the $b$ parameter for the fuzzy set membership strength calculations.
-     * Larger values yield an earlier decay in membership strength with increasing distance between observations.
+     * - For datasets with no more than 10000 observations, the number of epochs is set to 500.
+     * - For larger datasets, the number of epochs decreases from 500 according to the number of cells beyond 10000, to a lower limit of 200.
      *
-     * If this or `set_a()` is set to zero, a suitable value for this parameter is automatically determined from the values provided to `set_spread()` and `set_min_dist()`.
-     *
-     * @return A reference to this `Umap` object.
-     */
-    Umap& set_b(Float b = Defaults::b) {
-        this->b = b;
-        return *this;
-    }
-
-    /** 
-     * @param r Modifier for the repulsive force.
-     * Larger values increase repulsion and favor local structure.
-     *
-     * @return A reference to this `Umap` object.
-     */
-    Umap& set_repulsion_strength(Float r = Defaults::repulsion_strength) {
-        repulsion_strength = r;
-        return *this;
-    }
-
-    /** 
-     * @param i How to initialize the embedding, see `InitMethod` for more details.
-     * Some choices may use the existing coordinates provided to `run()` via the `embedding` argument.
-     *
-     * @return A reference to this `Umap` object.
-     */
-    Umap& set_initialize(InitMethod i = Defaults::initialize) {
-        init = i;
-        return *this;
-    }
-
-    /**
-     * @param n Number of epochs for the gradient descent, i.e., optimization iterations.
-     * Larger values improve convergence at the cost of computational work.
+     * This choice aims to reduce computational work for very large datasets. 
      *
      * @return A reference to this `Umap` object.
      */
     Umap& set_num_epochs(int n = Defaults::num_epochs) {
         num_epochs = n;
-        return *this;
-    }
-
-    /**
-     * @param l Initial learning rate used in the gradient descent.
-     * Larger values can improve the speed of convergence but at the cost of stability.
-     *
-     * @return A reference to this `Umap` object.
-     */
-    Umap& set_learning_rate(Float l = Defaults::learning_rate) {
-        learning_rate = l;
         return *this;
     }
 
@@ -307,18 +302,6 @@ public:
     }
 
     /**
-     * @param n Number of neighbors to use to define the fuzzy sets.
-     * Larger values improve connectivity and favor preservation of global structure, at the cost of increased computational work.
-     * This argument is only used in certain `run()` and `initialize()` methods that perform identification of the nearest neighbors. 
-     *
-     * @return A reference to this `Umap` object.
-     */
-    Umap& set_num_neighbors(Float n = Defaults::num_neighbors) {
-        num_neighbors = n;
-        return *this;
-    }
-
-    /**
      * @param s Seed to use for the Mersenne Twister when sampling negative observations.
      *
      * @return A reference to this `Umap` object.
@@ -329,18 +312,99 @@ public:
     }
 
     /**
-     * @param b Whether to optimize in batch mode. 
-     * Batch mode is required for effective parallelization via OpenMP but may reduce the stability of the gradient descent. 
+     * @param a Positive value for the $a$ parameter for the fuzzy set membership strength calculations.
+     * Larger values yield a sharper decay in membership strength with increasing distance between observations.
      *
-     * Batch mode involves computing forces for all observations and applying them simultaneously.
-     * This is in contrast to the default where the location of observation is updated before the forces are computed for the next observation.
-     * As each observation's forces are computed independently, batch mode is more amenable to parallelization;
-     * however, this comes at the cost of stability as the force calculations for later observations are not aware of updates to the positions of earlier observations.
+     * If this or `set_b()` is set to zero, a suitable value for this parameter is automatically determined from the values provided to `set_spread()` and `set_min_dist()`.
      *
      * @return A reference to this `Umap` object.
      */
-    Umap& set_batch(bool b = Defaults::batch) {
-        batch = b;
+    Umap& set_a(Float a = Defaults::a) {
+        rparams.a = a;
+        return *this;
+    }
+
+    /**
+     * @param b Value in $(0, 1)$ for the $b$ parameter for the fuzzy set membership strength calculations.
+     * Larger values yield an earlier decay in membership strength with increasing distance between observations.
+     *
+     * If this or `set_a()` is set to zero, a suitable value for this parameter is automatically determined from the values provided to `set_spread()` and `set_min_dist()`.
+     *
+     * @return A reference to this `Umap` object.
+     */
+    Umap& set_b(Float b = Defaults::b) {
+        rparams.b = b;
+        return *this;
+    }
+
+    /** 
+     * @param r Modifier for the repulsive force.
+     * Larger values increase repulsion and favor local structure.
+     *
+     * @return A reference to this `Umap` object.
+     */
+    Umap& set_repulsion_strength(Float r = Defaults::repulsion_strength) {
+        rparams.repulsion_strength = r;
+        return *this;
+    }
+
+    /**
+     * @param l Initial learning rate used in the gradient descent.
+     * Larger values can improve the speed of convergence but at the cost of stability.
+     *
+     * @return A reference to this `Umap` object.
+     */
+    Umap& set_learning_rate(Float l = Defaults::learning_rate) {
+        rparams.learning_rate = l;
+        return *this;
+    }
+
+    /**
+     * @param n Number of threads to use.
+     *
+     * @return A reference to this `Umap` object.
+     *
+     * This setting affects nearest neighbor detection (if an existing list of neighbors is not supplied in `initialize()` or `run()`) and spectral initialization.
+     * If `set_parallel_optimization()` is true, it will also affect the layout optimization, i.e., the gradient descent iterations.
+     *
+     * The `UMAPPP_CUSTOM_PARALLEL` macro can be set to a function that specifies a custom parallelization scheme.
+     * This function should be a template that accept three arguments:
+     *
+     * - `njobs`, an integer specifying the number of jobs.
+     * - `fun`, a lambda that accepts two arguments, `start` and `end`.
+     * - `nthreads`, an integer specifying the number of threads to use.
+     *
+     * The function should split `[0, njobs)` into any number of contiguous, non-overlapping intervals, and call `fun` on each interval, possibly in different threads.
+     * The details of the splitting and evaluation are left to the discretion of the developer defining the macro. 
+     * The function should only return once all evaluations of `fun` are complete.
+     *
+     * If `UMAPPP_CUSTOM_PARALLEL` is set, the `IRLBA_CUSTOM_PARALLEL` macro is also set if it is not already defined.
+     * This ensures that any custom parallelization scheme is propagated to all of **umappp**'s dependencies.
+     * If **irlba** is used outside of **umappp**, some care is required to ensure that the macros are consistently defined throughout the client library/application;
+     * otherwise, developers may observe ODR compilation errors. 
+     */
+    Umap& set_num_threads(int n = Defaults::num_threads) {
+        rparams.nthreads = n;
+        return *this;
+    }
+
+    /**
+     * @param p Whether to enable parallel optimization.
+     * If set to `true`, this will use the number of threads specified in `set_num_threads()` for the layout optimization step.
+     *
+     * @return A reference to this `Umap` object.
+     *
+     * By default, this is set to `false` as the increase in the number of threads is usually not cost-effective for layout optimization.
+     * Specifically, while CPU usage scales with the number of threads, the time spent does not decrease by the same factor.
+     * We also expect that the number of available CPUs is at least equal to the requested number of threads, otherwise contention will greatly degrade performance.
+     * Nonetheless, users can enable parallel optimization if cost is no issue - usually a higher number of threads (above 4) is required to see a reduction in time.
+     *
+     * If the `UMAPPP_NO_PARALLEL_OPTIMIZATION` macro is defined, **umappp** will not be compiled with support for parallel optimization.
+     * This may be desirable in environments that have no support for threading or atomics, or to reduce the binary size if parallelization is not of interest.
+     * In such cases, enabling parallel optimization and calling `Status::run()` will raise an error.
+     */
+    Umap& set_parallel_optimization(bool p = Defaults::parallel_optimization) {
+        rparams.parallel_optimization = p;
         return *this;
     }
 
@@ -352,14 +416,32 @@ public:
         /**
          * @cond
          */
-        Status(EpochData<Float> e, uint64_t seed, Float a_, Float b_) : epochs(std::move(e)), engine(seed), a(a_), b(b_) {}
+        Status(EpochData<Float> e, uint64_t seed, RuntimeParameters p, int n, Float* embed) : 
+            epochs(std::move(e)), engine(seed), rparams(std::move(p)), ndim_(n), embedding_(embed) {}
+
         EpochData<Float> epochs;
         std::mt19937_64 engine;
-        Float a;
-        Float b;
+        RuntimeParameters rparams;
+        int ndim_;
+        Float* embedding_;
         /**
          * @endcond
          */
+
+        /**
+         * @return Number of dimensions of the embedding.
+         */
+        int ndim() const {
+            return ndim_;
+        }
+
+        /**
+         * @return Pointer to a two-dimensional column-major array where rows are dimensions (`ndim`) and columns are observations.
+         * This is updated by `initialize()` to store the final embedding.
+         */
+        const Float* embedding() const {
+            return embedding_;
+        }
 
         /**
          * @return Current epoch.
@@ -379,13 +461,53 @@ public:
         /**
          * @return The number of observations in the dataset.
          */
-       size_t nobs() const {
-           return epochs.head.size();
-       }
+        size_t nobs() const {
+            return epochs.head.size();
+        }
+
+        /** 
+         * The status of the algorithm and the coordinates in `embedding()` are updated to the specified number of epochs. 
+         *
+         * @param epoch_limit Number of epochs to run to.
+         * The actual number of epochs performed is equal to the difference between `epoch_limit` and the current number of epochs in `epoch()`.
+         * `epoch_limit` should be not less than `epoch()` and be no greater than the maximum number of epochs specified in `Umap::set_num_epochs()`.
+         * If zero, defaults to the maximum number of epochs. 
+         *
+         */
+        void run(int epoch_limit = 0) {
+            if (rparams.nthreads == 1 || !rparams.parallel_optimization) {
+                optimize_layout(
+                    ndim_,
+                    embedding_,
+                    epochs,
+                    rparams.a,
+                    rparams.b,
+                    rparams.repulsion_strength,
+                    rparams.learning_rate,
+                    engine,
+                    epoch_limit
+                );
+            } else {
+                optimize_layout_parallel(
+                    ndim_,
+                    embedding_,
+                    epochs,
+                    rparams.a,
+                    rparams.b,
+                    rparams.repulsion_strength,
+                    rparams.learning_rate,
+                    engine,
+                    epoch_limit,
+                    rparams.nthreads
+                );
+            }
+            return;
+        }
     };
 
     /** 
      * @param x Indices and distances to the nearest neighbors for each observation.
+     * Note the expectations in the `NeighborList` documentation.
      * @param ndim Number of dimensions of the embedding.
      * @param[in, out] embedding Two-dimensional array to store the embedding, 
      * where rows are dimensions (`ndim`) and columns are observations (`x.size()`).
@@ -400,7 +522,7 @@ public:
 
         // Choosing the manner of initialization.
         if (init == SPECTRAL || init == SPECTRAL_ONLY) {
-            bool attempt = spectral_init(x, ndim, embedding);
+            bool attempt = spectral_init(x, ndim, embedding, rparams.nthreads);
             if (!attempt && init == SPECTRAL) {
                 random_init(x.size(), ndim, embedding);
             }
@@ -409,82 +531,62 @@ public:
         }
 
         // Finding a good a/b pair.
-        Float a_ = a;
-        Float b_ = b;
-        if (a_ <= 0 || b_ <= 0) {
+        auto pcopy = rparams;
+        if (pcopy.a <= 0 || pcopy.b <= 0) {
             auto found = find_ab(spread, min_dist);
-            a_ = found.first;
-            b_ = found.second;
+            pcopy.a = found.first;
+            pcopy.b = found.second;
         }
 
+        int num_epochs_to_do = choose_num_epochs(num_epochs, x.size());
+
         return Status(
-            similarities_to_epochs(x, num_epochs, negative_sample_rate),
+            similarities_to_epochs(x, num_epochs_to_do, negative_sample_rate),
             seed,
-            a_, 
-            b_
+            std::move(pcopy),
+            ndim,
+            embedding
         );
     }
 
 public:
-    /** 
-     * @param s The status of the algorithm, typically generated by `initialize()`.
+    /**
+     * @tparam Algorithm `knncolle::Base` subclass implementing a nearest neighbor search algorithm.
+     * 
+     * @param searcher Pointer to a `knncolle::Base` subclass with a `find_nearest_neighbors()` method.
      * @param ndim Number of dimensions of the embedding.
-     * @param[in, out] embedding Two-dimensional array where rows are dimensions (`ndim`) and columns are observations.
-     * This contains the initial coordinates and is updated to store the final embedding.
-     * @param epoch_limit Number of epochs to run to, from the current number of epochs in `s.epoch()`.
-     * If zero, defaults to the maximum number of epochs in `set_num_epochs()`.
+     * @param[out] embedding Two-dimensional array to store the embedding, 
+     * where rows are dimensions (`ndim`) and columns are observations (`searcher->nobs()`).
      *
-     * @return `s` and `embedding` are updated for the given number of epochs. 
+     * @return A `Status` object containing the initial state of the UMAP algorithm, to be used in `run()`.
+     * If `set_initialize()` is true, `embedding` is filled with initial coordinates derived from the fuzzy set graph;
+     * otherwise it is ignored.
      */
-    void run(Status& s, int ndim, Float* embedding, int epoch_limit = 0) const {
-        if (!batch) {
-            optimize_layout(
-                ndim,
-                embedding,
-                s.epochs,
-                s.a,
-                s.b,
-                repulsion_strength,
-                learning_rate,
-                s.engine,
-                epoch_limit
-            );
-        } else {
-            optimize_layout_batched(
-                ndim,
-                embedding,
-                s.epochs,
-                s.a,
-                s.b,
-                repulsion_strength,
-                learning_rate,
-                [&]() -> auto { return s.engine(); },
-                [](decltype(s.engine()) s) -> auto { return std::mt19937_64(s); },
-                epoch_limit
-            );
+    template<class Algorithm>
+    Status initialize(const Algorithm* searcher, int ndim, Float* embedding) { 
+        const size_t N = searcher->nobs();
+        NeighborList<Float> output(N);
 
+#ifndef UMAPPP_CUSTOM_PARALLEL
+        #pragma omp parallel for num_threads(rparams.nthreads)
+        for (size_t i = 0; i < N; ++i) {
+#else
+        UMAPPP_CUSTOM_PARALLEL(N, [&](size_t first, size_t last) -> void {
+        for (size_t i = first; i < last; ++i) {
+#endif
+
+            output[i] = searcher->find_nearest_neighbors(i, num_neighbors);
+
+#ifndef UMAPPP_CUSTOM_PARALLEL
         }
-        return;
+#else
+        }
+        }, rparams.nthreads);
+#endif
+
+        return initialize(std::move(output), ndim, embedding);
     }
 
-    /** 
-     * @param x Indices and distances to the nearest neighbors for each observation.
-     * @param ndim Number of dimensions of the embedding.
-     * @param[in, out] embedding Two-dimensional array where rows are dimensions (`ndim`) and columns are observations.
-     * This is filled with the final embedding on output.
-     * If `set_initialize()` is `NONE` or if spectral initialization fails with `SPECTRAL_ONLY`, `embedding` is assumed to contain the initial coordinates on input.
-     * @param epoch_limit Number of epochs to run to, from the current number of epochs in `s.epoch()` - see `run()`.
-     * If zero, defaults to the maximum number of epochs in `set_num_epochs()`.
-     *
-     * @return The status of the algorithm is returned after running up to `epoch_limit`, for re-use in `run()`.
-     * `embedding` is updated with the embedding at that point.
-     */
-    Status run(NeighborList<Float> x, int ndim, Float* embedding, int epoch_limit = 0) const {
-        auto status = initialize(std::move(x), ndim, embedding);
-        run(status, ndim, embedding, epoch_limit);
-        return status;
-    }
-public:
 #ifndef UMAPPP_CUSTOM_NEIGHBORS
     /**
      * @tparam Input Floating point type for the input data.
@@ -501,7 +603,7 @@ public:
      * If `set_initialize()` is `NONE` or if spectral initialization fails with `SPECTRAL_ONLY`, `embedding` should contain the initial coordinates and will not be altered;
      * otherwise, it is filled with initial coordinates.
      *
-     * This differs from the other `run()` methods in that it will internally compute the nearest neighbors for each observation.
+     * This differs from the other `initialize()` methods in that it will internally compute the nearest neighbors for each observation.
      * It will use vantage point trees for the search - see the other `initialize()` methods to specify a custom search algorithm.
      */
     template<typename Input = Float>
@@ -509,7 +611,48 @@ public:
         knncolle::VpTreeEuclidean<> searcher(ndim_in, nobs, input); 
         return initialize(&searcher, ndim_out, embedding);
     }
+#endif
 
+public:
+    /**
+     * @tparam Algorithm `knncolle::Base` subclass implementing a nearest neighbor search algorithm.
+     * 
+     * @param searcher Pointer to a `knncolle::Base` subclass with a `find_nearest_neighbors()` method.
+     * @param ndim Number of dimensions of the embedding.
+     * @param[in, out] embedding Two-dimensional array where rows are dimensions (`ndim`) and columns are observations (`searcher->nobs()`).
+     * This is filled with the final embedding on output.
+     * If `set_initialize()` is false, this is assumed to contain the initial coordinates on input.
+     * @param epoch_limit Number of epochs to run - see `Status::run()`.
+     *
+     * @return The status of the algorithm is returned after running up to `epoch_limit`; this can be used for further iterations by invoking `Status::run()`.
+     * `embedding` is updated with the embedding at the specified epoch limit.
+     */
+    template<class Algorithm> 
+    Status run(const Algorithm* searcher, int ndim, Float* embedding, int epoch_limit = 0) {
+        auto status = initialize(searcher, ndim, embedding);
+        status.run(epoch_limit);
+        return status;
+    }
+
+    /** 
+     * @param x Indices and distances to the nearest neighbors for each observation.
+     * Note the expectations in the `NeighborList` documentation.
+     * @param ndim Number of dimensions of the embedding.
+     * @param[in, out] embedding Two-dimensional array where rows are dimensions (`ndim`) and columns are observations.
+     * This is filled with the final embedding on output.
+     * If `set_initialize()` is `NONE` or if spectral initialization fails with `SPECTRAL_ONLY`, `embedding` is assumed to contain the initial coordinates on input.
+     * @param epoch_limit Number of epochs to run - see `Status::run()`.
+     *
+     * @return The status of the algorithm is returned after running up to `epoch_limit`; this can be used for further iterations by invoking `Status::run()`.
+     * `embedding` is updated with the embedding at the specified epoch limit.
+     */
+    Status run(NeighborList<Float> x, int ndim, Float* embedding, int epoch_limit = 0) const {
+        auto status = initialize(std::move(x), ndim, embedding);
+        status.run(epoch_limit);
+        return status;
+    }
+
+#ifndef UMAPPP_CUSTOM_NEIGHBORS
     /**
      * @tparam Input Floating point type for the input data.
      * 
@@ -521,75 +664,18 @@ public:
      * @param[in, out] embedding Two-dimensional array where rows are dimensions (`ndim`) and columns are observations (`searcher->nobs()`).
      * This is filled with the final embedding on output.
      * If `set_initialize()` is `NONE` or if spectral initialization fails with `SPECTRAL_ONLY`, `embedding` is assumed to contain the initial coordinates on input.
-     * @param epoch_limit Number of epochs to run to, from the current number of epochs in `s.epoch()` - see `run()`.
-     * If zero, defaults to the maximum number of epochs in `set_num_epochs()`.
+     * @param epoch_limit Number of epochs to run - see `Status::run()`.
      *
-     * @return The status of the algorithm is returned after running up to `epoch_limit`, for re-use in `run()`.
-     * `embedding` is updated with the embedding at that point.
+     * @return The status of the algorithm is returned after running up to `epoch_limit`; this can be used for further iterations by invoking `Status::run()`.
+     * `embedding` is updated with the embedding at the specified epoch limit.
      */
     template<typename Input = Float>
     Status run(int ndim_in, size_t nobs, const Input* input, int ndim_out, Float* embedding, int epoch_limit = 0) {
         auto status = initialize(ndim_in, nobs, input, ndim_out, embedding);
-        run(status, ndim_out, embedding, epoch_limit);
+        status.run(epoch_limit);
         return status;
     }
 #endif
-
-    /**
-     * @tparam Algorithm `knncolle::Base` subclass implementing a nearest neighbor search algorithm.
-     * 
-     * @param searcher Pointer to a `knncolle::Base` subclass with a `find_nearest_neighbors()` method.
-     * @param ndim Number of dimensions of the embedding.
-     * @param[out] embedding Two-dimensional array to store the embedding, 
-     * where rows are dimensions (`ndim`) and columns are observations (`searcher->nobs()`).
-     *
-     * @return A `Status` object containing the initial state of the UMAP algorithm, to be used in `run()`.
-     * If `set_initialize()` is true, `embedding` is filled with initial coordinates derived from the fuzzy set graph;
-     * otherwise it is ignored.
-     */
-    template<class Algorithm>
-    Status initialize(const Algorithm* searcher, int ndim, Float* embedding) { 
-        const size_t N = searcher->nobs();
-
-#ifdef _OPENMP
-        NeighborList<Float> output(N);
-#else
-        NeighborList<Float> output;
-        output.reserve(N);
-#endif
-
-        #pragma omp parallel for
-        for (size_t i = 0; i < N; ++i) {
-#ifdef _OPENMP
-            output[i] = searcher->find_nearest_neighbors(i, num_neighbors);
-#else
-            output.emplace_back(searcher->find_nearest_neighbors(i, num_neighbors));
-#endif
-        }
-
-        return initialize(output, ndim, embedding);
-    }
-
-    /**
-     * @tparam Algorithm `knncolle::Base` subclass implementing a nearest neighbor search algorithm.
-     * 
-     * @param searcher Pointer to a `knncolle::Base` subclass with a `find_nearest_neighbors()` method.
-     * @param ndim Number of dimensions of the embedding.
-     * @param[in, out] embedding Two-dimensional array where rows are dimensions (`ndim`) and columns are observations (`searcher->nobs()`).
-     * This is filled with the final embedding on output.
-     * If `set_initialize()` is false, this is assumed to contain the initial coordinates on input.
-     * @param epoch_limit Number of epochs to run to, from the current number of epochs in `s.epoch()` - see `run()`.
-     * If zero, defaults to the maximum number of epochs in `set_num_epochs()`.
-     *
-     * @return A `Status` object containing the state of the algorithm after running epochs up to `epoch_limit`.
-     * `embedding` is updated with the embedding at that point.
-     */
-    template<class Algorithm> 
-    Status run(const Algorithm* searcher, int ndim, Float* embedding, int epoch_limit = 0) {
-        auto status = initialize(searcher, ndim, embedding);
-        run(status, ndim, embedding, epoch_limit);
-        return status;
-    }
 };
 
 }

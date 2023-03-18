@@ -1,6 +1,9 @@
 #ifndef UMAPPP_NEIGHBOR_LIST_HPP
 #define UMAPPP_NEIGHBOR_LIST_HPP
 
+#include <utility>
+#include <vector>
+
 /**
  * @file NeighborList.hpp
  *
@@ -26,6 +29,8 @@ using Neighbor =  std::pair<int, Float>;
  * @tparam Float Floating-point type.
  *
  * Each inner vector corresponds to an observation and contains the list of nearest neighbors for that observation.
+ * Neighbors for each observation should be unique - there should be no more than one occurrence of each index in each inner vector.
+ * Also, the inner vector for observation `i` should not contain any `Neighbor` with index `i`.
  */
 template<typename Float = double>
 using NeighborList = std::vector<std::vector<Neighbor<Float> > >;
