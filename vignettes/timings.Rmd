@@ -53,7 +53,7 @@ We run the standard UMAP algorithm with Annoy-based neighbor detection and using
 
 ```{r}
 library(yaumap)
-system.time(out <- umap_from_matrix(y))
+system.time(out <- umap_from_matrix(y, num_epochs=200))
 plot(out[,1], out[,2], col=mnist$Label)
 ```
 
@@ -61,7 +61,7 @@ For comparison, we use **uwot** with the same settings.
 
 ```{r}
 library(uwot)
-system.time(ref <- umap(y, n_epochs=500, n_threads=1))
+system.time(ref <- umap(y, n_epochs=200, n_threads=1))
 plot(ref[,1], ref[,2], col=mnist$Label)
 ```
 
@@ -70,21 +70,22 @@ plot(ref[,1], ref[,2], col=mnist$Label)
 Reference **uwot** implementation:
 
 ```{r}
-system.time(ref <- umap(y, n_epochs=500, n_threads=6))
+system.time(ref <- umap(y, n_epochs=200, n_threads=6))
 plot(ref[,1], ref[,2], col=mnist$Label)
 ```
 
 Only parallelizing various parts of the initialization.
 
 ```{r}
-system.time(out <- umap_from_matrix(y, nthreads=6))
+system.time(out <- umap_from_matrix(y, num_epochs=200, num_threads=6))
 plot(out[,1], out[,2], col=mnist$Label)
 ```
 
-Parallelizing everything in batch mode.
+Parallelizing everything, including the optimization:
 
 ```{r}
-system.time(out <- umap_from_matrix(y, nthreads=6, batch=TRUE))
+system.time(out <- umap_from_matrix(y, num_epochs=200, num_threads=6, 
+                                    parallel_optimization=TRUE))
 plot(out[,1], out[,2], col=mnist$Label)
 ```
 
